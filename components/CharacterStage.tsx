@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Character } from "@/lib/characters";
 import type { ReframePayload } from "@/lib/parse-reframe-json";
@@ -7,10 +8,27 @@ import type { ReframePayload } from "@/lib/parse-reframe-json";
 type Props = {
   character: Character;
   payload: ReframePayload;
-  onCopy: (text: string) => void;
+  onCopy: (text: string) => void | Promise<void>;
 };
 
 export function CharacterStage({ character, payload, onCopy }: Props) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const t = window.setTimeout(() => setCopyState("idle"), 2200);
+    return () => window.clearTimeout(t);
+  }, [copyState]);
+
+  async function handleCopy() {
+    try {
+      await onCopy(payload.reframedMessage);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div
@@ -43,16 +61,28 @@ export function CharacterStage({ character, payload, onCopy }: Props) {
         </SpeechBubble>
         <SpeechBubble title="Try sending this" className={character.bubble} emphasize>
           <p className="whitespace-pre-wrap">{payload.reframedMessage}</p>
-          <button
-            type="button"
-            onClick={() => onCopy(payload.reframedMessage)}
-            className="mt-3 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700"
-          >
-            Copy message
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700"
+            >
+              Copy message
+            </button>
+            <span
+              className="text-sm font-medium text-rose-800"
+              role="status"
+              aria-live="polite"
+            >
+              {copyState === "copied"
+                ? "Copied to clipboard."
+                : copyState === "error"
+                  ? "Could not copy — select the text manually."
+                  : ""}
+            </span>
+          </div>
         </SpeechBubble>
       </div>
-
     </div>
   );
 }

@@ -1,8 +1,8 @@
 # A-A-Wrongbot
 
-Turn blunt or overly logical messages into emotionally validating, connection-friendly reframes — with selectable tones (Standard, Comic Relief, Mildly Spicy, Blunt-But-Kind, Fabio Heartthrob).
+Pick a **character coach** (each has a voice and look). They explain **how your draft might land**, validate what you meant, then give a **copy-ready message**. Powered by **Groq** on the server.
 
-Stack: **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, **Groq** (server-side only).
+**Web stack:** Next.js (App Router), TypeScript, Tailwind. **iOS shell:** Expo app in [`mobile/`](mobile/) (WebView → your deployed site).
 
 ## Local setup
 
@@ -55,6 +55,40 @@ Do **not** expose `GROQ_API_KEY` in the browser; this app only calls Groq from `
 
 - Never commit real keys. Use **`.env.local`** locally and **Vercel environment variables** in production.
 - If a key ever appears in GitHub (push, gist, or chat), **revoke it in the [Groq console](https://console.groq.com)** and create a new one, then update `.env.local` and Vercel.
+
+## API limits
+
+`POST /api/reframe` applies a **sliding-window rate limit per IP** (default **12 requests / 60 seconds** per server instance). Tune with optional env vars:
+
+- `REFRAME_RATE_LIMIT_MAX` (default `12`)
+- `REFRAME_RATE_LIMIT_WINDOW_MS` (default `60000`)
+
+Messages are capped at **8000 characters**. For many serverless instances, move limits to **Redis/Upstash** so counts are global.
+
+## App Store (iOS) — finish the “wrapper”
+
+1. **Deploy the website** (Vercel) and confirm it works in Safari over **HTTPS**.
+2. **Apple Developer Program** ($99/year) and **App Store Connect** listing (name, screenshots, privacy URL).
+3. **Point the Expo shell at production:**
+
+   ```bash
+   cd mobile
+   cp .env.example .env
+   # set EXPO_PUBLIC_WEB_APP_URL=https://<your-vercel-app>.vercel.app
+   ```
+
+4. **Install EAS CLI** and configure (one-time): [Expo EAS Submit](https://docs.expo.dev/submit/introduction/).
+
+   ```bash
+   npm install -g eas-cli
+   eas login
+   cd mobile && eas build:configure
+   eas build --platform ios
+   ```
+
+5. **Submit to TestFlight / App Store** via `eas submit` or Xcode Organizer.
+
+The `mobile` app is a **WebView** around the live site: ship UX on the web first; the store binary tracks that URL. For a fully native UI later, port screens to React Native instead of WebView.
 
 ## Safety note
 

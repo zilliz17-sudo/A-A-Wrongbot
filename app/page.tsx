@@ -62,8 +62,11 @@ export default function Home() {
   const coach = result ? getCharacter(result.characterId) : getCharacter(characterId);
   const displayCharacter = coach ?? CHARACTERS[0];
 
-  function copyText(text: string) {
-    void navigator.clipboard.writeText(text);
+  async function copyText(text: string) {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("clipboard unavailable");
+    }
+    await navigator.clipboard.writeText(text);
   }
 
   return (

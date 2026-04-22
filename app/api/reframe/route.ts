@@ -3,8 +3,18 @@ import Groq from "groq-sdk";
 import { getCharacter, isCharacterId } from "@/lib/characters";
 import { parseReframeJson } from "@/lib/parse-reframe-json";
 import { buildReframeSystemPrompt } from "@/lib/reframe-system-prompt";
+import { checkReframeRateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+const MAX_MESSAGE_CHARS = 8000;
+
+function parseIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -25,6 +35,24 @@ export async function POST(req: Request) {
 
   if (typeof message !== "string" || !message.trim()) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
+  }
+
+  if (message.length > MAX_MESSAGE_CHARS) {
+    return NextResponse.json(
+      { error: `message too long (max ${MAX_MESSAGE_CHARS} characters)` },
+      { status: 400 },
+    );
+  }
+
+  const ip = clientIpFromRequest(req);
+  const maxHits = parseIntEnv("REFRAME_RATE_LIMIT_MAX", 12);
+  const windowMs = parseIntEnv("REFRAME_RATE_LIMIT_WINDOW_MS", 60_000);
+  const limited = checkReframeRateLimit(`reframe:${ip}`, maxHits, windowMs);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+    );
   }
 
   if (!isCharacterId(characterIdRaw)) {
