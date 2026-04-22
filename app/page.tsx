@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { PersonaSelector, type Persona } from "@/components/PersonaSelector";
+import { CharacterPicker } from "@/components/CharacterPicker";
+import { CharacterStage } from "@/components/CharacterStage";
+import { CHARACTERS, type CharacterId, getCharacter } from "@/lib/characters";
+import type { ReframePayload } from "@/lib/parse-reframe-json";
+
+type ApiOk = ReframePayload & {
+  characterId: CharacterId;
+  characterName: string;
+  model: string;
+};
 
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [persona, setPersona] = useState<Persona>("Standard");
-  const [result, setResult] = useState<string | null>(null);
+  const [characterId, setCharacterId] = useState<CharacterId>(CHARACTERS[0].id);
+  const [result, setResult] = useState<ApiOk | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -18,23 +27,43 @@ export default function Home() {
       const res = await fetch("/api/reframe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, persona }),
+        body: JSON.stringify({ message, characterId }),
       });
-      const data = (await res.json()) as { text?: string; error?: string };
+      const data = (await res.json()) as Partial<ApiOk> & { error?: string; debug?: string };
       if (!res.ok) {
         setError(data.error || "Something went wrong");
         return;
       }
-      if (!data.text) {
-        setError("No text returned");
+      if (
+        typeof data.reframedMessage !== "string" ||
+        typeof data.characterId !== "string" ||
+        typeof data.characterName !== "string" ||
+        typeof data.model !== "string"
+      ) {
+        setError("Unexpected response from server");
         return;
       }
-      setResult(data.text);
+      setResult({
+        characterId: data.characterId,
+        characterName: data.characterName,
+        howItMayLand: typeof data.howItMayLand === "string" ? data.howItMayLand : "",
+        validationSummary:
+          typeof data.validationSummary === "string" ? data.validationSummary : "",
+        reframedMessage: data.reframedMessage,
+        model: data.model,
+      });
     } catch {
       setError("Network error — try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  const coach = result ? getCharacter(result.characterId) : getCharacter(characterId);
+  const displayCharacter = coach ?? CHARACTERS[0];
+
+  function copyText(text: string) {
+    void navigator.clipboard.writeText(text);
   }
 
   return (
@@ -44,21 +73,23 @@ export default function Home() {
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-12 sm:py-16">
         <header className="space-y-3 text-center sm:text-left">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">
-            Emotional firmware upgrade
+            Pick a face. Get the grace.
           </p>
           <h1 className="text-4xl font-extrabold tracking-tight text-rose-950 sm:text-5xl">
             A-A-Wrongbot
           </h1>
           <p className="text-lg leading-relaxed text-rose-900/80">
-            Drop the blunt thing you want to say. Pick a tone. Get a version that actually lands —
-            without losing what you meant.
+            Choose who talks you through it. They&apos;ll show how your words might land, then hand
+            you something kinder to send — without erasing what you meant.
           </p>
         </header>
 
         <section className="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl shadow-rose-200/40 backdrop-blur-md sm:p-8">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-8">
+            <CharacterPicker value={characterId} onChange={setCharacterId} disabled={loading} />
+
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-rose-900/80">Your message</span>
+              <span className="text-sm font-medium text-rose-900/80">What you want to say</span>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -69,15 +100,13 @@ export default function Home() {
               />
             </label>
 
-            <PersonaSelector value={persona} onChange={setPersona} disabled={loading} />
-
             <button
               type="button"
               onClick={reframe}
               disabled={loading || !message.trim()}
               className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-rose-500 to-fuchsia-500 px-5 py-3 text-base font-semibold text-white shadow-lg shadow-rose-300/50 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Reframing…" : "Reframe it"}
+              {loading ? `${displayCharacter.name} is thinking…` : `Ask ${displayCharacter.name}`}
             </button>
           </div>
         </section>
@@ -92,22 +121,20 @@ export default function Home() {
         ) : null}
 
         {result ? (
-          <section
-            aria-live="polite"
-            className="rounded-3xl border border-rose-100 bg-white/85 p-6 shadow-lg shadow-rose-100/60 backdrop-blur-md sm:p-8"
-          >
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-rose-500">
-              Your reframe
-            </h2>
-            <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed text-rose-950">
-              {result}
-            </pre>
-          </section>
+          <CharacterStage
+            character={getCharacter(result.characterId) ?? CHARACTERS[0]}
+            payload={{
+              howItMayLand: result.howItMayLand,
+              validationSummary: result.validationSummary,
+              reframedMessage: result.reframedMessage,
+            }}
+            onCopy={copyText}
+          />
         ) : null}
 
         <p className="text-center text-xs text-rose-800/60 sm:text-left">
-          For relationship communication support — not therapy or medical advice. Keys stay on the
-          server; add <code className="rounded bg-rose-100/80 px-1">GROQ_API_KEY</code> in{" "}
+          Communication support — not therapy. Keys stay on the server; add{" "}
+          <code className="rounded bg-rose-100/80 px-1">GROQ_API_KEY</code> in{" "}
           <code className="rounded bg-rose-100/80 px-1">.env.local</code>.
         </p>
       </main>

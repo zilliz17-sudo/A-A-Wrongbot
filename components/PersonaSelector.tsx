@@ -1,14 +1,8 @@
 "use client";
 
-export const PERSONAS = [
-  "Standard",
-  "Comic Relief",
-  "Mildly Spicy",
-  "Blunt-But-Kind",
-  "Fabio Heartthrob",
-] as const;
+import { PERSONAS, type Persona } from "@/lib/personas";
 
-export type Persona = (typeof PERSONAS)[number];
+export { PERSONAS, type Persona };
 
 type Props = {
   value: Persona;
@@ -16,6 +10,7 @@ type Props = {
   disabled?: boolean;
 };
 
+/** Legacy tone chips — prefer CharacterPicker for the main UX. */
 export function PersonaSelector({ value, onChange, disabled }: Props) {
   return (
     <div className="flex flex-col gap-2">
