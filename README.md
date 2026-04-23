@@ -90,6 +90,30 @@ Messages are capped at **8000 characters**. For many serverless instances, move 
 
 The `mobile` app is a **WebView** around the live site: ship UX on the web first; the store binary tracks that URL. For a fully native UI later, port screens to React Native instead of WebView.
 
+## Operator handoff checklist (April 2026)
+
+Use this exact sequence to finish launch tasks that must be performed in external dashboards/devices:
+
+1. **Vercel**
+   - Import the project in Vercel.
+   - Add `GROQ_API_KEY` in Project → Settings → Environment Variables.
+   - Deploy to production and verify the HTTPS URL loads in Safari.
+2. **Mobile `.env` + simulator verification**
+   - `cd mobile && cp .env.example .env`
+   - Set `EXPO_PUBLIC_WEB_APP_URL=https://<your-app>.vercel.app`
+   - `npx expo start`
+   - Press `i` to open iOS Simulator and confirm the hosted site loads in WebView.
+3. **App Store release flow (when ready)**
+   - Enroll in Apple Developer.
+   - Run `eas build --platform ios`.
+   - Run `eas submit --platform ios`.
+   - In App Store Connect, finalize screenshots, privacy policy URL, and review metadata.
+
+### Optional pre-submit cleanup
+
+- Change `mobile/app.json` bundle/package IDs from `com.aawrongbot.app` to your own reverse-DNS identifier.
+- Publish and use `https://<your-domain>/privacy` as the App Store privacy URL.
+
 ## Safety note
 
 This is a **communication assistant**, not therapy or medical care. The system prompt includes basic refusal guidance for self-harm or harm to others.
