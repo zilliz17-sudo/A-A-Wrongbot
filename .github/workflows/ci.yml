@@ -12,6 +12,10 @@ concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Restrict default token to read-only; no job in this workflow writes back.
+permissions:
+  contents: read
+
 jobs:
   # Detect which paths changed so downstream jobs can skip unchanged areas.
   changes:
