@@ -115,6 +115,15 @@ Use this exact sequence to finish launch tasks that must be performed in externa
 - Change `mobile/app.json` bundle/package IDs from `com.aawrongbot.app` to your own reverse-DNS identifier.
 - Publish and use `https://<your-domain>/privacy` as the App Store privacy URL.
 
+## CI / GitHub Actions
+
+The CI pipeline (`.github/workflows/ci.yml`) runs two jobs on every push and pull-request targeting `main`:
+
+- **build** — installs root dependencies, lints, and runs `next build`. The root `tsconfig.json` excludes `mobile/` so Expo-only deps never break the Next.js compile.
+- **mobile** — typechecks the Expo shell inside `mobile/`. This job is **skipped automatically** when no files under `mobile/**` changed, saving runner minutes.
+
+A `concurrency` group is set per PR (or branch) so only the **latest push** keeps running; any earlier in-progress run is cancelled.
+
 ## Safety note
 
 This is a **communication assistant**, not therapy or medical care. The system prompt includes basic refusal guidance for self-harm or harm to others.

@@ -1,12 +1,14 @@
 # Change Log
 
 Last updated: 2026-04-22
+Last updated: 2026-04-26
 
 Use this log to record launch-gate progress and release evidence.
 
 | Date (UTC) | Ticket ID | Change summary | Commit SHA | Verification evidence |
 |---|---|---|---|---|
 | 2026-04-22 | OPS-BOOTSTRAP | Added release gate checklist, canonical verification matrix, and wearables recovery checklist artifacts. | TBD | `npm run lint`, `npm run build` |
+| 2026-04-25 | TEST-001 | Recorded successful local prepr verification run and linked commit evidence | f55baae | `bash scripts/prepr.sh` |
 
 ## Logging rules
 - Every launch-gate completion must include a new row.

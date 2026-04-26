@@ -1,6 +1,7 @@
 # Release Gate Checklist
 
 Last updated: 2026-04-22
+Last updated: 2026-04-26
 
 Use this checklist as the launch blocker artifact. Every gate must have evidence before production launch.
 
@@ -15,6 +16,16 @@ Use this checklist as the launch blocker artifact. Every gate must have evidence
 | Verification harness passing | ☐ | Smoke + contract run logs |  |
 | Wearables differentiator restored | ☐ | WEAR-001/002 or WEAR-003 evidence |  |
 | Versioned DB migrations active | ☐ | Migration history + rollback test |  |
+
+| Verification harness passing | ✅ | `bash scripts/prepr.sh` — commit f55baae |  |
+| Wearables differentiator restored | ☐ | WEAR-001/002 or WEAR-003 evidence |  |
+| Versioned DB migrations active | ☐ | Migration history + rollback test |  |
+
+## TEST-001 gate evidence
+
+| Gate | Required outcome | Evidence | Status |
+| --- | --- | --- | --- |
+| TEST-001: Verification harness | Automated contract tests + smoke checks executed and logged | Local prepr verification run (`bash scripts/prepr.sh`) + commit f55baae | GREEN |
 
 ## Detailed acceptance criteria
 
