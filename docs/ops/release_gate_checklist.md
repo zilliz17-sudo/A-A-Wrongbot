@@ -1,5 +1,6 @@
 # Release Gate Checklist
 
+Last updated: 2026-04-22
 Last updated: 2026-04-26
 
 Use this checklist as the launch blocker artifact. Every gate must have evidence before production launch.
@@ -12,6 +13,10 @@ Use this checklist as the launch blocker artifact. Every gate must have evidence
 | Auth/session hardening | ☐ | Cookie/CSRF/session secret checks |  |
 | Backup/restore path in place | ☐ | Runbook + restore drill log |  |
 | PATCH validation + size limits | ☐ | Zod schemas + tests |  |
+| Verification harness passing | ☐ | Smoke + contract run logs |  |
+| Wearables differentiator restored | ☐ | WEAR-001/002 or WEAR-003 evidence |  |
+| Versioned DB migrations active | ☐ | Migration history + rollback test |  |
+
 | Verification harness passing | ✅ | `bash scripts/prepr.sh` — commit f55baae |  |
 | Wearables differentiator restored | ☐ | WEAR-001/002 or WEAR-003 evidence |  |
 | Versioned DB migrations active | ☐ | Migration history + rollback test |  |
