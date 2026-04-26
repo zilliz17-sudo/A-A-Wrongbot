@@ -6,7 +6,31 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel any in-progress run for the same PR or branch so only the
+# latest push is tested, avoiding wasted runner minutes.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Restrict default token to read-only; no job in this workflow writes back.
+permissions:
+  contents: read
+
 jobs:
+  # Detect which paths changed so downstream jobs can skip unchanged areas.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            mobile:
+              - 'mobile/**'
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -27,6 +51,8 @@ jobs:
         run: npm run build
 
   mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
